@@ -17,17 +17,17 @@
 
 		<div style="position: absolute; top: 95%; left: 45%;">
 			<select id="model_select">
-				<option value="Dolphin">Dolphin</option>
-				<option value="Cow">Cow</option>
-				<option value="Teapot">Teapot</option>
-				<option value="Stanford_Bunny">Stanford Bunny</option>
-				<option value="Cat">Cat</option>
-				<option value="Cake">Cake</option>
-				<option value="Pumpkin">Pumpkin</option>
+				<option value="dolphin">Dolphin</option>
+				<option value="cow">Cow</option>
+				<option value="teapot">Teapot</option>
+				<!-- <option value="stanford_bunny">Stanford Bunny</option>
+				<option value="cat">Cat</option>
+				<option value="cake">Cake</option>
+				<option value="pumpkin">Pumpkin</option> -->
 			</select>
 		</div>
 		<div style="position: absolute; top: 95%; left: 55%;">
-			<button type="button">LOAD MODEL</button>
+			<button type="button" id="loadingModel">LOAD MODEL</button>
 		</div>
 		
 		<script src="scoreoutputer.min.js"></script>
@@ -49,7 +49,7 @@
 				so.addChild("場景顯示成果模型", 1, true);
 				so.addChild("執行pytorch3D程式碼產生25個模型", 2, true);
 				so.addChild("可拖動GUI顯示不同階段模型", 3, true);
-				so.addChild("可更換其他模型", 3, false);
+				so.addChild("可更換其他模型", 3, true);
 		
 				//產生自評表，參數如下所示
 				so.renderModal(
@@ -101,6 +101,11 @@
 			// The iterations of pytorch3d models
             const models = [0,5,10,20,30,40,50,60,80,100,130,160,190,220,250,300,400,500,600,800,1000,1250,1500,1750,2000];
 
+			// PLY model files
+			const loader = new PLYLoader();
+			let mesh;
+			let mesh2 = [];
+
 			changeModel();
 			init();
 			animate();
@@ -132,48 +137,8 @@
 
 				plane.receiveShadow = true;
 
-
-				// PLY model files
-
-                const loader = new PLYLoader();
-
-				// Load original model according to model_id
-				loader.load( './models/' + changedModel + '.ply', function ( geometry ) {
-
-					const material = new THREE.MeshPhongMaterial( { color: 0xFF5555, specular: 0x111111, shininess: 200 } );
-					geometry.computeVertexNormals();
-
-					const mesh = new THREE.Mesh( geometry, material );
-
-					mesh.position.set( -0.5, -0.5, 0 );
-					mesh.scale.multiplyScalar( 1.5 );
-
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
-
-					scene.add( mesh );
-				} );
-
-				// The material for pytorch3d model
-				const material = new THREE.MeshPhongMaterial( { color: 0xAAAAAA, specular: 0x111111, shininess: 200 } );
-				
-				// Load models of pytorch3d 
-				models.forEach(element => loader.load( './models/' + changedModel + '/model_' + element.toString() + '.ply', 
-				function ( geometry ) {
-
-					geometry.computeVertexNormals();
-
-                    const mesh = new THREE.Mesh( geometry, material );
-					mesh.name = element;
-                    mesh.position.set( 0.5, -0.5, 0 );
-					mesh.scale.multiplyScalar( 1.5 );
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-					if (element !=0) {
-						mesh.visible = false;
-					}
-                    scene.add( mesh );
-                } ));
+				//Show Model
+				showModel();
 
 				const gui = new GUI();
 				const effectController = { step:1 };
@@ -198,15 +163,13 @@
 					}
 				}
 
-
 				// Lights
-
 				scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
 
 				addShadowedLight( 1, 1, 1, 0xffffff, 1.35 );
 				addShadowedLight( 0.5, 1, - 1, 0xffaa00, 1 );
-				// renderer
 
+				// renderer
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -216,9 +179,81 @@
 
 				container.appendChild( renderer.domElement );
 
-				//
-
 				window.addEventListener( 'resize', onWindowResize );
+
+			}
+
+			function showModel()
+			{
+				// Load original model according to model_id
+				loader.load( './models/' + changedModel + '.ply', function ( geometry ) {
+
+				const material = new THREE.MeshPhongMaterial( { color: 0xFF5555, specular: 0x111111, shininess: 200 } );
+				geometry.computeVertexNormals();
+
+				mesh = new THREE.Mesh( geometry, material );
+
+				if (changedModel=="dolphin")
+				{
+					mesh.position.set( -0.5, -0.5, 0 );
+					mesh.scale.multiplyScalar( 1.5 );
+				}
+				else if (changedModel=="cow") 
+				{
+					mesh.position.set( -0.5, -0.1, 0 );
+					mesh.rotation.set( 0, 3, 0 );
+					mesh.scale.multiplyScalar( 0.5 );
+				}
+				else if (changedModel=="teapot") 
+				{
+					mesh.position.set( -0.5, -0.1, 0 );
+					mesh.scale.multiplyScalar( 0.4 );
+				}
+
+				mesh.castShadow = true;
+				mesh.receiveShadow = true;
+
+				scene.add( mesh );
+				} );
+
+				let num = 0;
+				// The material for pytorch3d model
+				const material = new THREE.MeshPhongMaterial( { color: 0xAAAAAA, specular: 0x111111, shininess: 200 } );
+
+				// Load models of pytorch3d 
+				models.forEach(element => loader.load( './models/' + changedModel + '/model_' + element.toString() + '.ply', 
+				function ( geometry ) {
+
+				geometry.computeVertexNormals();
+
+				mesh2[num] = new THREE.Mesh( geometry, material );
+				mesh2[num].name = element;
+				if (changedModel=="dolphin")
+				{
+					mesh2[num].position.set( 0.5, -0.5, 0 );
+					mesh2[num].scale.multiplyScalar( 1.5 );
+				}
+				else if (changedModel=="cow") 
+				{
+					mesh2[num].position.set( 0.5, -0.1, 0 );
+					mesh2[num].rotation.set( 0, 3, 0 );
+					mesh2[num].scale.multiplyScalar( 0.5 );
+				}
+				else if (changedModel=="teapot") 
+				{
+					mesh2[num].position.set( 0.5, -0.1, 0 );
+					mesh2[num].scale.multiplyScalar( 0.4 );
+				}
+
+				mesh2[num].castShadow = true;
+				mesh2[num].receiveShadow = true;
+				if (element !=0) {
+					mesh2[num].visible = false;
+				}
+				scene.add( mesh2[num] );
+				num += 1;
+				
+				} ));
 
 			}
      
@@ -243,13 +278,26 @@
 
 			}
 
+			// button
+			document.getElementById('loadingModel').addEventListener("click", buttonClick);
+
+			function buttonClick()
+			{
+				console.log(changedModel);
+				scene.remove(mesh);
+				for (let i = 0; i < models.length; i++)
+				{
+					scene.remove(mesh2[i]);
+				}
+				showModel();
+			}
+
 			// change Model
 			document.getElementById("model_select").addEventListener("change", changeModel);
 
 			function changeModel()
 			{
 				changedModel = document.getElementById("model_select").value;
-				console.log(changedModel);
 			}
 
 			function onWindowResize() {
