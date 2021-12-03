@@ -105,7 +105,9 @@
 			const loader = new PLYLoader();
 			let mesh;
 			let mesh2 = [];
-			const effectController = { step:1 };
+
+			let gui = new GUI();
+			let item;
 
 			changeModel();
 			init();
@@ -141,27 +143,8 @@
 				//Show Model
 				showModel();
 
-				const gui = new GUI();
-				gui.add( effectController, 'step', 1, models.length, 1 ).onChange( iterChanger );
-
-				let currentIter = effectController.step;
-				function iterChanger() {
-					if (currentIter==effectController.step) {
-						return;
-					}
-					currentIter = effectController.step;
-					var textTag = document.getElementById('modelNum');
-					textTag.innerText = "iter #" + models[currentIter-1].toString();
-					for(let i=0; i<models.length;i++) {
-						let item = scene.getObjectByName(models[i]);
-						if(i != currentIter-1 && item.visible==true) {
-							item.visible = false;
-						}
-						else if (i == currentIter-1) {
-							item.visible = true;
-						}
-					}
-				}
+				//gui
+				guiStep();
 
 				// Lights
 				scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
@@ -181,6 +164,31 @@
 
 				window.addEventListener( 'resize', onWindowResize );
 
+			}
+
+			function guiStep()
+			{
+				const effectController = { step:1 };
+				item = gui.add( effectController, 'step', 1, models.length, 1 ).onChange( iterChanger );
+
+				let currentIter = effectController.step;
+				function iterChanger() {
+					if (currentIter==effectController.step) {
+						return;
+					}
+					currentIter = effectController.step;
+					var textTag = document.getElementById('modelNum');
+					textTag.innerText = "iter #" + models[currentIter-1].toString();
+					for(let i=0; i<models.length;i++) {
+						let item = scene.getObjectByName(models[i]);
+						if(i != currentIter-1 && item.visible==true) {
+							item.visible = false;
+						}
+						else if (i == currentIter-1) {
+							item.visible = true;
+						}
+					}
+				}
 			}
 
 			function showModel()
@@ -289,7 +297,9 @@
 				{
 					scene.remove(mesh2[i]);
 				}
+				gui.remove(item);
 				showModel();
+				guiStep();
 			}
 
 			// change Model
